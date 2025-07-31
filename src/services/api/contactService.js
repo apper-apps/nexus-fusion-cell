@@ -1,125 +1,372 @@
-import contactsData from "@/services/mockData/contacts.json";
-// Simulate API delay
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+import { toast } from 'react-toastify';
 
-// In-memory storage for demonstration
-let contacts = [...contactsData];
+let apperClient;
+
+const initializeClient = () => {
+  if (!apperClient) {
+    const { ApperClient } = window.ApperSDK;
+    apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
+  }
+  return apperClient;
+};
 
 export const getAll = async () => {
-  await delay(300);
-  return [...contacts];
+  try {
+    const client = initializeClient();
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "Tags" } },
+        { field: { Name: "Owner" } },
+        { field: { Name: "firstName" } },
+        { field: { Name: "lastName" } },
+        { field: { Name: "email" } },
+        { field: { Name: "phone" } },
+        { field: { Name: "lifecycleStage" } },
+        { field: { Name: "createdAt" } },
+        { field: { Name: "updatedAt" } },
+        { field: { Name: "notes" } },
+        { field: { Name: "companyId" } }
+      ],
+      orderBy: [
+        {
+          fieldName: "CreatedOn",
+          sorttype: "DESC"
+        }
+      ],
+      pagingInfo: {
+        limit: 100,
+        offset: 0
+      }
+    };
+
+    const response = await client.fetchRecords('app_contact', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      toast.error(response.message);
+      return [];
+    }
+
+    return response.data || [];
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error fetching contacts:", error?.response?.data?.message);
+    } else {
+      console.error(error.message);
+    }
+    return [];
+  }
 };
 
 export const getById = async (id) => {
-  await delay(200);
-  const contact = contacts.find(c => c.Id === parseInt(id));
-  if (!contact) {
-    throw new Error("Contact not found");
+  try {
+    const client = initializeClient();
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "Tags" } },
+        { field: { Name: "Owner" } },
+        { field: { Name: "firstName" } },
+        { field: { Name: "lastName" } },
+        { field: { Name: "email" } },
+        { field: { Name: "phone" } },
+        { field: { Name: "lifecycleStage" } },
+        { field: { Name: "createdAt" } },
+        { field: { Name: "updatedAt" } },
+        { field: { Name: "notes" } },
+        { field: { Name: "companyId" } }
+      ]
+    };
+
+    const response = await client.getRecordById('app_contact', parseInt(id), params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      toast.error(response.message);
+      return null;
+    }
+
+    return response.data;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error(`Error fetching contact with ID ${id}:`, error?.response?.data?.message);
+    } else {
+      console.error(error.message);
+    }
+    return null;
   }
-  return { ...contact };
 };
 
 export const create = async (contactData) => {
-await delay(400);
-  
-  const maxId = Math.max(...contacts.map(c => c.Id), 0);
-  const newContact = {
-    ...contactData,
-    Id: maxId + 1,
-    companyId: contactData.companyId ? parseInt(contactData.companyId) : null,
-    customProperties: contactData.customProperties || {},
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-  
-  contacts.push(newContact);
-  return { ...newContact };
+  try {
+    const client = initializeClient();
+    
+    // Only include Updateable fields
+    const updateableData = {
+      Name: contactData.Name || `${contactData.firstName} ${contactData.lastName}`,
+      Tags: contactData.Tags || "",
+      Owner: contactData.Owner,
+      firstName: contactData.firstName,
+      lastName: contactData.lastName,
+      email: contactData.email,
+      phone: contactData.phone || "",
+      lifecycleStage: contactData.lifecycleStage || "Lead",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      notes: contactData.notes || "",
+      companyId: contactData.companyId ? parseInt(contactData.companyId) : null
+    };
+
+    const params = {
+      records: [updateableData]
+    };
+
+    const response = await client.createRecord('app_contact', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      toast.error(response.message);
+      return null;
+    }
+
+    if (response.results) {
+      const successfulRecords = response.results.filter(result => result.success);
+      const failedRecords = response.results.filter(result => !result.success);
+      
+      if (failedRecords.length > 0) {
+        console.error(`Failed to create contact ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+        
+        failedRecords.forEach(record => {
+          record.errors?.forEach(error => {
+            toast.error(`${error.fieldLabel}: ${error.message}`);
+          });
+          if (record.message) toast.error(record.message);
+        });
+      }
+      
+      if (successfulRecords.length > 0) {
+        toast.success('Contact created successfully');
+        return successfulRecords[0].data;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error creating contact:", error?.response?.data?.message);
+    } else {
+      console.error(error.message);
+    }
+    return null;
+  }
 };
 
 export const update = async (id, contactData) => {
-await delay(400);
-  
-  const index = contacts.findIndex(c => c.Id === parseInt(id));
-  if (index === -1) {
-    throw new Error("Contact not found");
+  try {
+    const client = initializeClient();
+    
+    // Only include Updateable fields plus Id
+    const updateableData = {
+      Id: parseInt(id),
+      Name: contactData.Name || `${contactData.firstName} ${contactData.lastName}`,
+      Tags: contactData.Tags,
+      Owner: contactData.Owner,
+      firstName: contactData.firstName,
+      lastName: contactData.lastName,
+      email: contactData.email,
+      phone: contactData.phone,
+      lifecycleStage: contactData.lifecycleStage,
+      updatedAt: new Date().toISOString(),
+      notes: contactData.notes,
+      companyId: contactData.companyId ? parseInt(contactData.companyId) : null
+    };
+
+    const params = {
+      records: [updateableData]
+    };
+
+    const response = await client.updateRecord('app_contact', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      toast.error(response.message);
+      return null;
+    }
+
+    if (response.results) {
+      const successfulUpdates = response.results.filter(result => result.success);
+      const failedUpdates = response.results.filter(result => !result.success);
+      
+      if (failedUpdates.length > 0) {
+        console.error(`Failed to update contact ${failedUpdates.length} records:${JSON.stringify(failedUpdates)}`);
+        
+        failedUpdates.forEach(record => {
+          record.errors?.forEach(error => {
+            toast.error(`${error.fieldLabel}: ${error.message}`);
+          });
+          if (record.message) toast.error(record.message);
+        });
+      }
+      
+      if (successfulUpdates.length > 0) {
+        toast.success('Contact updated successfully');
+        return successfulUpdates[0].data;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error updating contact:", error?.response?.data?.message);
+    } else {
+      console.error(error.message);
+    }
+    return null;
   }
-  
-  const updatedContact = {
-    ...contacts[index],
-    ...contactData,
-    companyId: contactData.companyId ? parseInt(contactData.companyId) : null,
-    customProperties: {
-      ...contacts[index].customProperties,
-      ...contactData.customProperties
-    },
-    updatedAt: new Date().toISOString()
-  };
-  
-  contacts[index] = updatedContact;
-  return { ...updatedContact };
 };
 
 export const delete_ = async (id) => {
-  await delay(300);
-  
-  const index = contacts.findIndex(c => c.Id === parseInt(id));
-  if (index === -1) {
-    throw new Error("Contact not found");
-  }
-  
-  contacts.splice(index, 1);
-return true;
-};
-
-// Bulk delete multiple contacts
-export const bulkDelete = async (contactIds) => {
-  await delay(500); // Simulate API delay
-  
-  // Validate all contact IDs exist
-  for (const id of contactIds) {
-    const contact = contacts.find(c => c.Id === id);
-    if (!contact) {
-      throw new Error(`Contact with ID ${id} not found`);
-    }
-  }
-  
-  // Remove all contacts from the array
-  contactIds.forEach(id => {
-    const index = contacts.findIndex(c => c.Id === id);
-    if (index !== -1) {
-      contacts.splice(index, 1);
-    }
-  });
-  
-  return true;
-};
-
-// Bulk update lifecycle stage for multiple contacts
-export const bulkUpdateLifecycleStage = async (contactIds, lifecycleStage) => {
-  await delay(500); // Simulate API delay
-  
-  const validStages = ['lead', 'prospect', 'customer', 'evangelist'];
-  if (!validStages.includes(lifecycleStage)) {
-    throw new Error('Invalid lifecycle stage');
-  }
-  
-  const updatedContacts = [];
-  
-  for (const id of contactIds) {
-    const contactIndex = contacts.findIndex(c => c.Id === id);
-    if (contactIndex === -1) {
-      throw new Error(`Contact with ID ${id} not found`);
-    }
-    
-    contacts[contactIndex] = {
-      ...contacts[contactIndex],
-      lifecycleStage,
-      updatedAt: new Date().toISOString()
+  try {
+    const client = initializeClient();
+    const params = {
+      RecordIds: [parseInt(id)]
     };
+
+    const response = await client.deleteRecord('app_contact', params);
     
-    updatedContacts.push(contacts[contactIndex]);
+    if (!response.success) {
+      console.error(response.message);
+      toast.error(response.message);
+      return false;
+    }
+
+    if (response.results) {
+      const successfulDeletions = response.results.filter(result => result.success);
+      const failedDeletions = response.results.filter(result => !result.success);
+      
+      if (failedDeletions.length > 0) {
+        console.error(`Failed to delete contact ${failedDeletions.length} records:${JSON.stringify(failedDeletions)}`);
+        
+        failedDeletions.forEach(record => {
+          if (record.message) toast.error(record.message);
+        });
+      }
+      
+      if (successfulDeletions.length > 0) {
+        toast.success('Contact deleted successfully');
+        return true;
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error deleting contact:", error?.response?.data?.message);
+    } else {
+      console.error(error.message);
+    }
+    return false;
   }
-  
-  return updatedContacts;
 };
-// Export delete_ function (delete is a reserved keyword)
+
+export const bulkDelete = async (contactIds) => {
+  try {
+    const client = initializeClient();
+    const params = {
+      RecordIds: contactIds.map(id => parseInt(id))
+    };
+
+    const response = await client.deleteRecord('app_contact', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      toast.error(response.message);
+      return false;
+    }
+
+    if (response.results) {
+      const successfulDeletions = response.results.filter(result => result.success);
+      const failedDeletions = response.results.filter(result => !result.success);
+      
+      if (failedDeletions.length > 0) {
+        console.error(`Failed to delete contacts ${failedDeletions.length} records:${JSON.stringify(failedDeletions)}`);
+        
+        failedDeletions.forEach(record => {
+          if (record.message) toast.error(record.message);
+        });
+      }
+      
+      if (successfulDeletions.length > 0) {
+        toast.success(`${successfulDeletions.length} contacts deleted successfully`);
+        return successfulDeletions.length === contactIds.length;
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error deleting contacts:", error?.response?.data?.message);
+    } else {
+      console.error(error.message);
+    }
+    return false;
+  }
+};
+
+export const bulkUpdateLifecycleStage = async (contactIds, lifecycleStage) => {
+  try {
+    const client = initializeClient();
+    
+    const records = contactIds.map(id => ({
+      Id: parseInt(id),
+      lifecycleStage: lifecycleStage,
+      updatedAt: new Date().toISOString()
+    }));
+
+    const params = {
+      records: records
+    };
+
+    const response = await client.updateRecord('app_contact', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      toast.error(response.message);
+      return [];
+    }
+
+    if (response.results) {
+      const successfulUpdates = response.results.filter(result => result.success);
+      const failedUpdates = response.results.filter(result => !result.success);
+      
+      if (failedUpdates.length > 0) {
+        console.error(`Failed to update lifecycle stage ${failedUpdates.length} records:${JSON.stringify(failedUpdates)}`);
+        
+        failedUpdates.forEach(record => {
+          record.errors?.forEach(error => {
+            toast.error(`${error.fieldLabel}: ${error.message}`);
+          });
+          if (record.message) toast.error(record.message);
+        });
+      }
+      
+      if (successfulUpdates.length > 0) {
+        toast.success(`${successfulUpdates.length} contacts updated successfully`);
+        return successfulUpdates.map(result => result.data);
+      }
+    }
+    
+    return [];
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error updating lifecycle stage:", error?.response?.data?.message);
+    } else {
+      console.error(error.message);
+    }
+    return [];
+  }
+};

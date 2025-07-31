@@ -1,6 +1,21 @@
-import React from "react";
+import React, { useContext } from "react";
 import { NavLink } from "react-router-dom";
 import ApperIcon from "@/components/ApperIcon";
+import { AuthContext } from "@/App";
+
+const LogoutButton = () => {
+  const { logout } = useContext(AuthContext);
+  
+  return (
+    <button
+      onClick={logout}
+      className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors duration-200"
+      title="Logout"
+    >
+      <ApperIcon name="LogOut" className="h-4 w-4" />
+    </button>
+  );
+};
 
 const Sidebar = ({ isOpen, onClose }) => {
 const navigation = [
@@ -51,16 +66,19 @@ const navigation = [
             ))}
           </nav>
 
-          {/* Footer */}
+{/* Footer */}
           <div className="px-6 py-4 border-t border-gray-200">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-gradient-to-r from-accent-400 to-accent-500 rounded-full flex items-center justify-center">
-                <ApperIcon name="User" className="h-4 w-4 text-white" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-gradient-to-r from-accent-400 to-accent-500 rounded-full flex items-center justify-center">
+                  <ApperIcon name="User" className="h-4 w-4 text-white" />
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-900">Sales Team</p>
+                  <p className="text-xs text-gray-500">Administrator</p>
+                </div>
               </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-900">Sales Team</p>
-                <p className="text-xs text-gray-500">Administrator</p>
-              </div>
+              <LogoutButton />
             </div>
           </div>
         </div>
@@ -120,16 +138,19 @@ const navigation = [
                 ))}
               </nav>
 
-              {/* Footer */}
+{/* Footer */}
               <div className="px-6 py-4 border-t border-gray-200">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-gradient-to-r from-accent-400 to-accent-500 rounded-full flex items-center justify-center">
-                    <ApperIcon name="User" className="h-4 w-4 text-white" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-gradient-to-r from-accent-400 to-accent-500 rounded-full flex items-center justify-center">
+                      <ApperIcon name="User" className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm font-medium text-gray-900">Sales Team</p>
+                      <p className="text-xs text-gray-500">Administrator</p>
+                    </div>
                   </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">Sales Team</p>
-                    <p className="text-xs text-gray-500">Administrator</p>
-                  </div>
+                  <LogoutButton />
                 </div>
               </div>
             </div>
