@@ -133,52 +133,60 @@ function AppContent() {
 return (
     <AuthContext.Provider value={authMethods}>
       <CustomPropertyProvider>
-        <div className="min-h-screen bg-gray-50">
-          <div className="flex h-screen">
-            <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/callback" element={<Callback />} />
-              <Route path="/error" element={<ErrorPage />} />
-              <Route path="/prompt-password/:appId/:emailAddress/:provider" element={<PromptPassword />} />
-              <Route path="/reset-password/:appId/:fields" element={<ResetPassword />} />
-              <Route path="/" element={<Navigate to="/contacts" replace />} />
-              <Route 
-                path="/contacts" 
-                element={<ContactsPage onMobileMenuToggle={handleMobileMenuToggle} />} 
-              />
-              <Route 
-                path="/deals" 
-                element={<DealsPage onMobileMenuToggle={handleMobileMenuToggle} />} 
-              />
-              <Route 
-                path="/marketing" 
-                element={<MarketingPage onMobileMenuToggle={handleMobileMenuToggle} />} 
-              />
-              <Route 
-                path="/reports" 
-                element={<ReportsPage onMobileMenuToggle={handleMobileMenuToggle} />} 
-              />
-              <Route 
-                path="/settings" 
-                element={<SettingsPage onMobileMenuToggle={handleMobileMenuToggle} />} 
-              />
-            </Routes>
-          </div>
-          <ToastContainer 
-            position="top-right" 
-            autoClose={3000} 
-            hideProgressBar={false} 
-            newestOnTop={false} 
-            closeOnClick 
-            rtl={false} 
-            pauseOnFocusLoss 
-            draggable 
-            pauseOnHover 
-            theme="light" 
-          />
-        </div>
+        <Routes>
+          {/* Authentication routes - render without sidebar */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/callback" element={<Callback />} />
+          <Route path="/error" element={<ErrorPage />} />
+          <Route path="/prompt-password/:appId/:emailAddress/:provider" element={<PromptPassword />} />
+          <Route path="/reset-password/:appId/:fields" element={<ResetPassword />} />
+          
+          {/* Main application routes - render with sidebar and layout */}
+          <Route path="/*" element={
+            <div className="min-h-screen bg-gray-50">
+              <div className="flex h-screen">
+                <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+                <Routes>
+                  <Route path="/" element={<Navigate to="/contacts" replace />} />
+                  <Route 
+                    path="/contacts" 
+                    element={<ContactsPage onMobileMenuToggle={handleMobileMenuToggle} />} 
+                  />
+                  <Route 
+                    path="/deals" 
+                    element={<DealsPage onMobileMenuToggle={handleMobileMenuToggle} />} 
+                  />
+                  <Route 
+                    path="/marketing" 
+                    element={<MarketingPage onMobileMenuToggle={handleMobileMenuToggle} />} 
+                  />
+                  <Route 
+                    path="/reports" 
+                    element={<ReportsPage onMobileMenuToggle={handleMobileMenuToggle} />} 
+                  />
+                  <Route 
+                    path="/settings" 
+                    element={<SettingsPage onMobileMenuToggle={handleMobileMenuToggle} />} 
+                  />
+                </Routes>
+              </div>
+            </div>
+          } />
+        </Routes>
+        
+        <ToastContainer 
+          position="top-right" 
+          autoClose={3000} 
+          hideProgressBar={false} 
+          newestOnTop={false} 
+          closeOnClick 
+          rtl={false} 
+          pauseOnFocusLoss 
+          draggable 
+          pauseOnHover 
+          theme="light" 
+        />
       </CustomPropertyProvider>
     </AuthContext.Provider>
   );
