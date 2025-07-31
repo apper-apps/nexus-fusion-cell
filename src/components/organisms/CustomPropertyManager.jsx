@@ -22,11 +22,11 @@ const CustomPropertyManager = () => {
   });
   const [optionsText, setOptionsText] = useState("");
 
-  const fieldTypes = [
+const fieldTypes = [
     { value: "text", label: "Text" },
     { value: "number", label: "Number" },
     { value: "date", label: "Date" },
-    { value: "dropdown", label: "Dropdown" },
+    { value: "radio", label: "Radio" },
     { value: "multi-select", label: "Multi-Select" }
   ];
 
@@ -67,8 +67,8 @@ const CustomPropertyManager = () => {
 
     try {
       const propertyData = {
-        ...formData,
-        options: (formData.type === "dropdown" || formData.type === "multi-select") 
+...formData,
+        options: (formData.type === "radio" || formData.type === "multi-select") 
           ? optionsText.split('\n').filter(opt => opt.trim()).map(opt => opt.trim())
           : []
       };
@@ -247,7 +247,7 @@ const CustomPropertyManager = () => {
               </label>
             </div>
 
-            {(formData.type === "dropdown" || formData.type === "multi-select") && (
+{(formData.type === "radio" || formData.type === "multi-select") && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Options (one per line)
